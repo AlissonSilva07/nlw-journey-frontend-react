@@ -1,9 +1,10 @@
-import { MapPin, Calendar, Settings2 } from "lucide-react";
+import { MapPin, Calendar, Settings2, X, ArrowRight } from "lucide-react";
 import { Button } from "../../components/button";
-import { useParams } from "react-router-dom";
-import { useEffect, useState } from "react";
+import { useNavigate, useParams } from "react-router-dom";
+import { FormEvent, useEffect, useState } from "react";
 import { api } from "../../lib/axios";
 import { format } from "date-fns";
+import { DateRange, DayPicker } from "react-day-picker";
 
 interface Trip {
   id: string;
@@ -17,33 +18,136 @@ export function DestinationAndDateHeader() {
   const { tripId } = useParams()
   const [trip, setTrip] = useState<Trip | undefined>()
 
+  const [destination, setDestination] = useState('')
+  const [eventStartAndEndDates, setEventStartAndEndDates] = useState<DateRange | undefined>()
+
+  const [isDatePickerOpen, setIsDatePickerOpen] = useState(false)
+
+  function openDatePicker() {
+    setIsDatePickerOpen(true);
+  }
+
+  function closeDatePicker() {
+    setIsDatePickerOpen(false);
+  }
+
+  const [editMode, setEditMode] = useState<boolean>(false)
+
+  const handleOpenEditMode = () => {
+    setEditMode(true)
+  }
+
+  const handleCloseEditMode = () => {
+    setEditMode(false)
+  }
+
+  async function updateTrip(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault()
+
+    if (!destination) {
+      return
+    }
+
+    if (!eventStartAndEndDates?.from || !eventStartAndEndDates?.to) {
+      return
+    }
+
+    const response = await api.put(`/trips/${tripId}`, {
+      destination,
+      starts_at: eventStartAndEndDates?.from,
+      ends_at: eventStartAndEndDates?.to,
+    })
+
+    const { tripID } = response.data
+
+    window.document.location.reload
+  }
+
   useEffect(() => {
     api.get(`trips/${tripId}`).then(response => setTrip(response.data.trip))
   }, [tripId])
 
   const displayedDate = trip ? format(trip.starts_at, "d' de 'LLL").concat(' até ').concat(format(trip.ends_at, "d' de 'LLL"))
-  : null
+    : null
 
   return (
     <div className="px-4 h-16 rounded-xl bg-zinc-900 shadow-shape flex items-center justify-between">
-        <div className="flex items-center gap-2">
-          <MapPin className="size-5 text-zinc-400" />
-          <span className="text-zinc-100">{trip?.destination}</span>
-        </div>
-
-        <div className="flex items-center gap-5">
+      {editMode == false ? (
+        <>
           <div className="flex items-center gap-2">
-            <Calendar className="size-5 text-zinc-400" />
-            <span className="text-zinc-100">{displayedDate}</span>
+            <MapPin className="size-5 text-zinc-400" />
+            <span className="text-zinc-100">{trip?.destination}</span>
           </div>
 
-          <div className="w-px h-6 bg-zinc-800" />
+          <div className="flex items-center gap-5">
+            <div className="flex items-center gap-2">
+              <Calendar className="size-5 text-zinc-400" />
+              <span className="text-zinc-100">{displayedDate}</span>
+            </div>
 
-          <Button variant="secondary">
-            Alterar local/data
-            <Settings2 className="size-5" />
-          </Button>
-        </div>
-      </div>
+            <div className="w-px h-6 bg-zinc-800" />
+
+            <Button onClick={handleOpenEditMode} variant="secondary">
+              Alterar local/data
+              <Settings2 className="size-5" />
+            </Button>
+          </div>
+        </>
+      )
+        : (
+          <>
+            <div className="flex items-center gap-2 flex-1">
+              <MapPin className="size-5 text-zinc-400" />
+              <input
+                type="text"
+                placeholder="Para onde você vai?"
+                className="bg-transparent text-lg placeholder-zinc-400 outline-none flex-1"
+                onChange={event => setDestination(event.target.value)}
+              />
+            </div>
+
+            <button onClick={openDatePicker} className="flex items-center gap-2 text-left w-[240px]">
+              <Calendar className="size-5 text-zinc-400" />
+              <span
+                className="text-lg text-zinc-400 w-40 flex-1"
+              >
+                {displayedDate || 'Quando'}
+              </span>
+            </button>
+
+            {isDatePickerOpen && (
+              <div className="fixed inset-0 bg-black/60 flex items-center justify-center">
+                <div className="rounded-xl py-5 px-6 shadow-shape bg-zinc-900 space-y-5">
+                  <div className="space-y-2">
+                    <div className="flex items-center justify-between">
+                      <h2 className="font-lg font-semibold">Selecione a data</h2>
+                      <button>
+                        <X className="size-5 text-zinc-400" onClick={closeDatePicker} />
+                      </button>
+                    </div>
+                  </div>
+
+                  <DayPicker mode="range" selected={eventStartAndEndDates} onSelect={setEventStartAndEndDates} />
+                </div>
+              </div>
+            )}
+
+            <div className="w-px h-6 bg-zinc-800" />
+
+
+            <div className="flex items-center gap-2">
+              <Button onClick={handleCloseEditMode} variant="secondary">
+                <X className="size-5" />
+              </Button>
+              <Button>
+                Confirmar
+                <ArrowRight className="size-5" />
+              </Button>
+
+            </div>
+          </>
+        )
+      }
+    </div >
   )
 }
