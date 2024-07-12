@@ -1,10 +1,11 @@
 import { MapPin, Calendar, Settings2, X, ArrowRight } from "lucide-react";
 import { Button } from "../../components/button";
-import { useNavigate, useParams } from "react-router-dom";
-import { FormEvent, useEffect, useState } from "react";
+import { useParams } from "react-router-dom";
+import { useEffect, useState } from "react";
 import { api } from "../../lib/axios";
 import { format } from "date-fns";
 import { DateRange, DayPicker } from "react-day-picker";
+import { ptBR } from "date-fns/locale";
 
 interface Trip {
   id: string;
@@ -19,7 +20,7 @@ export function DestinationAndDateHeader() {
   const [trip, setTrip] = useState<Trip | undefined>()
 
   const [destination, setDestination] = useState('')
-  const [eventStartAndEndDates, setEventStartAndEndDates] = useState<DateRange | undefined>()
+  const [eventStartAndEndDates, setEventStartAndEndDates] = useState<DateRange>()
 
   const [isDatePickerOpen, setIsDatePickerOpen] = useState(false)
 
@@ -41,8 +42,7 @@ export function DestinationAndDateHeader() {
     setEditMode(false)
   }
 
-  async function updateTrip(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault()
+  async function updateTrip() {
 
     if (!destination) {
       return
@@ -52,22 +52,26 @@ export function DestinationAndDateHeader() {
       return
     }
 
-    const response = await api.put(`/trips/${tripId}`, {
+    console.log(destination, eventStartAndEndDates.from, eventStartAndEndDates.to)
+
+    await api.put(`/trips/${tripId}`, {
       destination,
       starts_at: eventStartAndEndDates?.from,
       ends_at: eventStartAndEndDates?.to,
     })
-
-    const { tripID } = response.data
-
-    window.document.location.reload
+    
+    window.document.location.reload()
   }
 
   useEffect(() => {
     api.get(`trips/${tripId}`).then(response => setTrip(response.data.trip))
   }, [tripId])
 
-  const displayedDate = trip ? format(trip.starts_at, "d' de 'LLL").concat(' até ').concat(format(trip.ends_at, "d' de 'LLL"))
+  const displayedDateBefore = trip ? format(trip.starts_at, "d' de 'LLL").concat(' até ').concat(format(trip.ends_at, "d' de 'LLL"))
+    : null
+  
+  const displayedDateAfter = eventStartAndEndDates && eventStartAndEndDates.from && eventStartAndEndDates.to 
+    ? format(eventStartAndEndDates.from, "d' de 'LLL").concat(' até ').concat(format(eventStartAndEndDates.to, "d' de 'LLL", { locale: ptBR }))
     : null
 
   return (
@@ -82,7 +86,7 @@ export function DestinationAndDateHeader() {
           <div className="flex items-center gap-5">
             <div className="flex items-center gap-2">
               <Calendar className="size-5 text-zinc-400" />
-              <span className="text-zinc-100">{displayedDate}</span>
+              <span className="text-zinc-100">{displayedDateBefore}</span>
             </div>
 
             <div className="w-px h-6 bg-zinc-800" />
@@ -101,7 +105,7 @@ export function DestinationAndDateHeader() {
               <input
                 type="text"
                 placeholder="Para onde você vai?"
-                className="bg-transparent text-lg placeholder-zinc-400 outline-none flex-1"
+                className="bg-transparent placeholder-zinc-400 outline-none flex-1"
                 onChange={event => setDestination(event.target.value)}
               />
             </div>
@@ -109,9 +113,9 @@ export function DestinationAndDateHeader() {
             <button onClick={openDatePicker} className="flex items-center gap-2 text-left w-[240px]">
               <Calendar className="size-5 text-zinc-400" />
               <span
-                className="text-lg text-zinc-400 w-40 flex-1"
+                className="text-zinc-400 w-40 flex-1"
               >
-                {displayedDate || 'Quando'}
+                {displayedDateAfter || 'Quando'}
               </span>
             </button>
 
@@ -139,7 +143,7 @@ export function DestinationAndDateHeader() {
               <Button onClick={handleCloseEditMode} variant="secondary">
                 <X className="size-5" />
               </Button>
-              <Button>
+              <Button onClick={updateTrip} variant="primary">
                 Confirmar
                 <ArrowRight className="size-5" />
               </Button>
