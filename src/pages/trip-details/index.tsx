@@ -6,6 +6,7 @@ import { Guests } from "./guests";
 import { Activities } from "./activities";
 import { DestinationAndDateHeader } from "./destination-and-date-header";
 import { CreateImportantLinkModal } from "./create-important-link-modal";
+import { CreateGuestsModal } from "./create-guests-modal.";
 
 export function TripDetailsPage() {
   const [isCreateActivityModalOpen, setIsCreateActivityModalOpen] = useState(false)
@@ -18,14 +19,24 @@ export function TripDetailsPage() {
     setIsCreateActivityModalOpen(false)
   }
 
-  const [isCreateImportantLinkModalOpen, setIsCreateImportantLinkCreateImportantLinkModalOpen] = useState(false)
+  const [isCreateImportantLinkModalOpen, setIsCreateImportantLinkModalOpen] = useState(false)
 
   function openCreateImportantLinkModal() {
-    setIsCreateImportantLinkCreateImportantLinkModalOpen(true)
+    setIsCreateImportantLinkModalOpen(true)
   }
 
   function closeCreateImportantLinkModal() {
-    setIsCreateImportantLinkCreateImportantLinkModalOpen(false)
+    setIsCreateImportantLinkModalOpen(false)
+  }
+
+  const [isCreateGuestsModalOpen, setIsCreateGuestsModalOpen] = useState(false)
+
+  function openCreateGuestsModal() {
+    setIsCreateGuestsModalOpen(true)
+  }
+
+  function closeCreateGuestsModal() {
+    setIsCreateGuestsModalOpen(false)
   }
 
   return (
@@ -51,7 +62,7 @@ export function TripDetailsPage() {
 
           <div className="w-full h-px bg-zinc-800" />
 
-          <Guests />
+          <Guests openCreateGuestsModal={openCreateGuestsModal} />
         </div>
       </main>
 
@@ -64,6 +75,12 @@ export function TripDetailsPage() {
       {isCreateImportantLinkModalOpen && (
         <CreateImportantLinkModal
           closeCreateImportantLinkModal={closeCreateImportantLinkModal}
+        />
+      )}
+
+      {isCreateGuestsModalOpen && (
+        <CreateGuestsModal
+          closeCreateGuestsModal={closeCreateGuestsModal}
         />
       )}
     </div>

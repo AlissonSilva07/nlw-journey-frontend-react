@@ -4,6 +4,10 @@ import { useState, useEffect } from "react";
 import { useParams } from "react-router-dom";
 import { api } from "../../lib/axios";
 
+
+interface GuestsProps {
+  openCreateGuestsModal: () => void
+}
 interface Participant {
   id: string;
   name: string | null;
@@ -11,7 +15,7 @@ interface Participant {
   is_confirmed: boolean;
 }
 
-export function Guests() {
+export function Guests({ openCreateGuestsModal }: GuestsProps) {
   const { tripId } = useParams()
   const [participants, setParticipants] = useState<Participant[]>([])
 
@@ -42,7 +46,7 @@ export function Guests() {
         ))}
       </div>
 
-      <Button variant="secondary" size="full">
+      <Button onClick={openCreateGuestsModal} variant="secondary" size="full">
         <UserCog className="size-5" />
         Gerenciar convidados
       </Button>
